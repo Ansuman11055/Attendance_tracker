@@ -1,5 +1,5 @@
 // Data Structures
-let timetable = JSON.parse(localStorage.getItem('ece_timetable')) || {};
+let timetable = JSON.parse(localStorage.getItem('timetable')) || {};
 let attendanceData = JSON.parse(localStorage.getItem('ece_attendance')) || {};
 let attendanceTarget = parseInt(localStorage.getItem('ece_attendance_target') || '75', 10);
 
@@ -29,6 +29,8 @@ function initTheme() {
             themeText.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
         }
         
+        window.dispatchEvent(new CustomEvent('themechanged'));
+
         document.documentElement.style.transition = 'all 0.3s ease';
         setTimeout(() => {
             document.documentElement.style.transition = '';
@@ -36,7 +38,20 @@ function initTheme() {
     }
 }
 
-// ADDED: Function to animate numbers counting up
+// RESTORED: Original tab switching function
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+  
+  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelector(`.nav-tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+
+  if (tabName === 'dashboard') {
+      triggerDashboardAnimations();
+  }
+}
+
+// --- Dashboard Animations ---
 function animateCountUp(el) {
     const text = el.innerText;
     const target = parseFloat(text.replace('%', ''));
@@ -51,7 +66,6 @@ function animateCountUp(el) {
             clearInterval(interval);
             el.innerText = text;
         } else {
-            // Check if target is a float or integer for correct formatting
             if (text.includes('.')) {
                 el.innerText = `${current.toFixed(2)}%`;
             } else {
@@ -61,43 +75,25 @@ function animateCountUp(el) {
     }, 15);
 }
 
-
-// ADDED: Function to handle animations on the dashboard
 function triggerDashboardAnimations() {
     const cards = document.querySelectorAll('#dashboard .stat-card, #dashboard .subject-stat-card');
     cards.forEach((card, index) => {
-        // Reset state by removing class and hiding
         card.classList.remove('animated-card');
         card.style.opacity = '0';
         
-        // Trigger staggered entrance animation
         setTimeout(() => {
             card.style.opacity = '1';
             card.classList.add('animated-card');
         }, index * 100);
 
-        // Trigger count-up animation for numbers inside the card
         const percentageEl = card.querySelector('.attendance-percentage, .subject-percentage');
-        const numberEl = card.querySelector('p:not([class])'); // Targets the simple number <p> tags
+        const numberEl = card.querySelector('p:not([class])'); 
         if (percentageEl) animateCountUp(percentageEl);
         if (numberEl) animateCountUp(numberEl);
     });
 }
 
-function showTab(tabName) {
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-  document.getElementById(tabName).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-  document.querySelector(`.nav-tab[onclick="showTab('${tabName}')"]`).classList.add('active');
-
-  // MODIFIED: Trigger animations whenever the dashboard tab is shown
-  if (tabName === 'dashboard') {
-      triggerDashboardAnimations();
-  }
-}
-
-// ... (rest of attendance.js code is unchanged) ...
-
+// --- Main Application Logic ---
 function getAttendanceClass(percentage) {
     if (percentage >= 85) return 'excellent';
     if (percentage >= 70) return 'good';
@@ -170,7 +166,7 @@ function renderTimetable() {
 function clearTimetable() {
   if (confirm('Are you sure you want to clear all timetable data? This action cannot be undone.')) {
     timetable = {};
-    localStorage.removeItem('ece_timetable');
+    localStorage.removeItem('timetable');
     renderTimetable();
     updateDashboard();
     alert('Timetable cleared.');
@@ -179,7 +175,7 @@ function clearTimetable() {
 
 function resetApplication() {
   if (confirm('DANGER: This will permanently delete ALL timetable and attendance data. This action cannot be undone. Are you sure you want to proceed?')) {
-    localStorage.removeItem('ece_timetable');
+    localStorage.removeItem('timetable');
     localStorage.removeItem('ece_attendance');
     localStorage.removeItem('ece_attendance_target');
     location.reload();
@@ -271,7 +267,7 @@ document.getElementById('importFile').addEventListener('change', function(event)
         });
 
         timetable = newTimetable;
-        localStorage.setItem('ece_timetable', JSON.stringify(timetable));
+        localStorage.setItem('timetable', JSON.stringify(timetable));
         renderTimetable();
         updateDashboard();
         alert('Timetable imported successfully!');
@@ -299,7 +295,7 @@ function addManualClass(event) {
     }
     const newClass = { code: code.toUpperCase(), name, day, time: timeSlot };
     timetable[subjectKey] = newClass;
-    localStorage.setItem('ece_timetable', JSON.stringify(timetable));
+    localStorage.setItem('timetable', JSON.stringify(timetable));
     renderTimetable();
     alert(`Class "${code}" added successfully.`);
     document.getElementById('manualAddForm').reset();
@@ -414,26 +410,30 @@ function updateDashboard() {
   subjectWiseStatsDiv.innerHTML = subjectStatsHtml;
 }
 
+// Initial Load
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-  
-  const attendanceTargetSlider = document.getElementById('attendanceTarget');
-  const targetValueSpan = document.getElementById('targetValue');
-  attendanceTargetSlider.value = attendanceTarget;
-  targetValueSpan.textContent = `${attendanceTarget}%`;
+    initTheme();
 
-  attendanceTargetSlider.addEventListener('input', (event) => {
-    attendanceTarget = parseInt(event.target.value, 10);
+    const attendanceTargetSlider = document.getElementById('attendanceTarget');
+    const targetValueSpan = document.getElementById('targetValue');
+    attendanceTargetSlider.value = attendanceTarget;
     targetValueSpan.textContent = `${attendanceTarget}%`;
-    localStorage.setItem('ece_attendance_target', attendanceTarget);
-    updateDashboard();
-  });
 
-  document.getElementById('attendanceDate').valueAsDate = new Date();
-  renderTimetable();
-  loadDailySchedule();
-  updateDashboard();
-  showTab('dashboard'); // Show dashboard on initial load to trigger animations
-  document.getElementById('attendanceDate').addEventListener('change', loadDailySchedule);
-  document.getElementById('manualAddForm').addEventListener('submit', addManualClass);
+    attendanceTargetSlider.addEventListener('input', (event) => {
+        attendanceTarget = parseInt(event.target.value, 10);
+        targetValueSpan.textContent = `${attendanceTarget}%`;
+        localStorage.setItem('ece_attendance_target', attendanceTarget);
+        updateDashboard();
+    });
+
+    document.getElementById('attendanceDate').valueAsDate = new Date();
+
+    renderTimetable();
+    loadDailySchedule();
+    updateDashboard();
+
+    showTab('dashboard'); 
+
+    document.getElementById('attendanceDate').addEventListener('change', loadDailySchedule);
+    document.getElementById('manualAddForm').addEventListener('submit', addManualClass);
 });
