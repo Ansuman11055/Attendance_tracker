@@ -5,6 +5,51 @@ let attendanceTarget = parseInt(localStorage.getItem('ece_attendance_target') ||
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+
+// --- NEW: 3D BACKGROUND LOGIC ---
+function init3dBackground() {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const canvas = document.getElementById('bg-canvas');
+    const header = document.querySelector('.header');
+    
+    const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        alpha: true // Make canvas background transparent
+    });
+
+    // Set initial size
+    renderer.setSize(header.clientWidth, header.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    
+    // Create the 3D shape
+    const geometry = new THREE.IcosahedronGeometry(1.5, 0); // A geometric shape with radius 1.5
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+    const shape = new THREE.Mesh(geometry, material);
+    scene.add(shape);
+
+    camera.position.z = 4;
+
+    // Handle window resizing
+    window.addEventListener('resize', () => {
+        renderer.setSize(header.clientWidth, header.clientHeight);
+        camera.aspect = header.clientWidth / header.clientHeight;
+        camera.updateProjectionMatrix();
+    });
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        shape.rotation.x += 0.001;
+        shape.rotation.y += 0.002;
+        renderer.render(scene, camera);
+    }
+
+    animate();
+}
+// --- END OF 3D LOGIC ---
+
+
 /**
  * A dedicated, robust function to sort timetable slots chronologically.
  */
@@ -290,6 +335,11 @@ function updateDashboard() {
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize 3D Background
+  if (typeof THREE !== 'undefined') {
+      init3dBackground();
+  }
+  
   // Setup Target Attendance Slider
   const attendanceTargetSlider = document.getElementById('attendanceTarget');
   const targetValueSpan = document.getElementById('targetValue');
@@ -300,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     attendanceTarget = parseInt(event.target.value, 10);
     targetValueSpan.textContent = `${attendanceTarget}%`;
     localStorage.setItem('ece_attendance_target', attendanceTarget);
-    updateDashboard(); // Re-render dashboard to apply highlighting
+    updateDashboard();
   });
 
   // Setup main application

@@ -5,14 +5,20 @@
   <title>Attendance Tracker</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 </head>
 <body>
 <div class="container">
 
   <div class="header">
-    <h1>Indian Institute of Technology Mandi</h1>
-    <h2>Attendance Tracker</h2>
-    <p>Track your classes</p>
+    <canvas id="bg-canvas"></canvas>
+    <div class="header-content">
+      <h1>Indian Institute of Technology Mandi</h1>
+      <h2>Attendance Tracker</h2>
+      <p>Track your classes</p>
+    </div>
   </div>
 
   <div class="nav-tabs">
@@ -100,6 +106,6 @@
 
 </div>
 
-<script src="attendance.js?v=8"></script>
+<script src="attendance.js?v=7"></script>
 </body>
 </html>
