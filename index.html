@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <canvas id="bg-canvas"></canvas>
+    <div class="header-content">
+      <h1>Indian Institute of Technology Mandi</h1>
+      <h2>Attendance Tracker</h2>
+      <p>Track your classes</p>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+    <button class="nav-tab" onclick="showTab('attendance')">✅ Mark Attendance</button>
+    <button class="nav-tab" onclick="showTab('timetable')">📅 Timetable Setup</button>
+  </div>
+
+  <div id="dashboard" class="tab-content active">
+    <h3>📊 Attendance Summary</h3>
+    <div id="dashboardStats"></div>
+
+    <h3 style="margin-top: 30px;">📚 Subject-wise Attendance</h3>
+    <div id="subjectWiseStats"></div>
+
+    <h3 style="margin-top: 30px;">🎯 Target Attendance</h3>
+    <p>Set a goal to maintain your attendance.</p>
+    <div class="target-attendance-control">
+        <label for="attendanceTarget">Target:</label>
+        <input type="range" id="attendanceTarget" min="0" max="100" value="75">
+        <span id="targetValue">75%</span>
+    </div>
+    <p class="target-info">If your attendance for any subject falls below this target, it will be highlighted to alert you.</p>
+  </div>
+
+  <div id="attendance" class="tab-content">
+    <h3>✅ Mark Attendance</h3>
+    <div class="date-picker">
+      <label for="attendanceDate">Select Date:</label>
+      <input type="date" id="attendanceDate">
+    </div>
+    <div id="dailySchedule"></div>
+  </div>
+
+  <div id="timetable" class="tab-content">
+    <h3>📅 Timetable Grid</h3>
+    <div id="timetableGrid"></div>
+
+    <div class="timetable-actions">
+        <div class="import-export">
+          <h4>Import from XLSX</h4>
+          <input type="file" id="importFile" accept=".xlsx, .xls, .csv">
+        </div>
+
+        <div class="manual-add">
+            <h4>Add Class Manually</h4>
+            <form id="manualAddForm">
+                <div class="form-group">
+                    <label for="subjectCode">Subject Code</label>
+                    <input type="text" id="subjectCode" placeholder="e.g., CE-252" required>
+                </div>
+                <div class="form-group">
+                    <label for="subjectName">Subject Name</label>
+                    <input type="text" id="subjectName" placeholder="e.g., GEOLOGY">
+                </div>
+                <div class="form-group">
+                    <label for="subjectDay">Day</label>
+                    <select id="subjectDay" required>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                </div>
+                <div class="form-group time-group">
+                    <div>
+                        <label for="startTime">Start Time</label>
+                        <input type="time" id="startTime" required>
+                    </div>
+                    <div>
+                        <label for="endTime">End Time</label>
+                        <input type="time" id="endTime" required>
+                    </div>
+                </div>
+                <button type="submit" class="add-btn">➕ Add Class</button>
+            </form>
+        </div>
+    </div>
+    <button class="clear-btn" onclick="clearTimetable()">🗑️ Clear Entire Timetable</button>
+    <button class="reset-all-btn" onclick="resetApplication()">🚨 Reset All Application Data</button>
+  </div>
+
+</div>
+
+<script src="attendance.js?v=7"></script>
+</body>
+</html>
