@@ -5,50 +5,53 @@ let attendanceTarget = parseInt(localStorage.getItem('ece_attendance_target') ||
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-
-// --- NEW: 3D BACKGROUND LOGIC ---
-function init3dBackground() {
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const canvas = document.getElementById('bg-canvas');
-    const header = document.querySelector('.header');
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('ece_theme') || 'light';
+    const themeToggle = document.getElementById('themeToggle');
     
-    const renderer = new THREE.WebGLRenderer({
-        canvas: canvas,
-        alpha: true // Make canvas background transparent
-    });
-
-    // Set initial size
-    renderer.setSize(header.clientWidth, header.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // Set initial theme
+    setTheme(savedTheme);
     
-    // Create the 3D shape
-    const geometry = new THREE.IcosahedronGeometry(1.5, 0); // A geometric shape with radius 1.5
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-    const shape = new THREE.Mesh(geometry, material);
-    scene.add(shape);
-
-    camera.position.z = 4;
-
-    // Handle window resizing
-    window.addEventListener('resize', () => {
-        renderer.setSize(header.clientWidth, header.clientHeight);
-        camera.aspect = header.clientWidth / header.clientHeight;
-        camera.updateProjectionMatrix();
+    // Theme toggle event listener
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        localStorage.setItem('ece_theme', newTheme);
     });
+    
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const themeIcon = document.querySelector('.theme-icon');
+        const themeText = document.getElementById('theme-text'); // Get the text element
 
-    // Animation loop
-    function animate() {
-        requestAnimationFrame(animate);
-        shape.rotation.x += 0.001;
-        shape.rotation.y += 0.002;
-        renderer.render(scene, camera);
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        // ADDED: Logic to update the text content based on the current theme
+        if (themeText) {
+            themeText.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+        }
+        
+        // Add a nice animation effect
+        document.documentElement.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+            document.documentElement.style.transition = '';
+        }, 300);
     }
-
-    animate();
 }
-// --- END OF 3D LOGIC ---
 
+// Attendance gauge color logic
+function getAttendanceClass(percentage) {
+    if (percentage >= 85) return 'excellent';
+    if (percentage >= 70) return 'good';
+    return 'poor';
+}
+
+function getSubjectAttendanceClass(percentage) {
+    if (percentage >= 85) return 'subject-excellent';
+    if (percentage >= 70) return 'subject-good';
+    return 'subject-poor';
+}
 
 /**
  * A dedicated, robust function to sort timetable slots chronologically.
@@ -313,8 +316,31 @@ function updateDashboard() {
   const totalClasses = Object.keys(attendanceData).length;
   const presentCount = Object.values(attendanceData).filter(s => s === 'present').length;
   const absentCount = Object.values(attendanceData).filter(s => s === 'absent').length;
-  const overallPercentage = totalClasses > 0 ? ((presentCount / totalClasses) * 100).toFixed(2) : 'N/A';
-  statsDiv.innerHTML = `<div class="stat-card"><h4>📈 Overall Attendance</h4><p>${overallPercentage}%</p></div><div class="stat-card"><h4>📚 Total Classes</h4><p>${totalClasses}</p></div><div class="stat-card"><h4>✔️ Classes Attended</h4><p>${presentCount}</p></div><div class="stat-card"><h4>❌ Classes Missed</h4><p>${absentCount}</p></div>`;
+  const overallPercentage = totalClasses > 0 ? ((presentCount / totalClasses) * 100).toFixed(2) : 0;
+  
+  // Get dynamic class for overall attendance
+  const overallAttendanceClass = totalClasses > 0 ? getAttendanceClass(parseFloat(overallPercentage)) : '';
+  const displayPercentage = totalClasses > 0 ? `${overallPercentage}%` : 'N/A';
+  
+  // Enhanced dashboard stats with dynamic gauge
+  statsDiv.innerHTML = `
+    <div class="stat-card attendance-gauge attendance-${overallAttendanceClass}">
+      <h4>📈 Overall Attendance</h4>
+      <p class="attendance-percentage">${displayPercentage}</p>
+    </div>
+    <div class="stat-card">
+      <h4>📚 Total Classes</h4>
+      <p>${totalClasses}</p>
+    </div>
+    <div class="stat-card">
+      <h4>✔️ Classes Attended</h4>
+      <p>${presentCount}</p>
+    </div>
+    <div class="stat-card">
+      <h4>❌ Classes Missed</h4>
+      <p>${absentCount}</p>
+    </div>
+  `;
   
   const subjectStats = calculateSubjectWiseStats();
   let subjectStatsHtml = '';
@@ -326,19 +352,27 @@ function updateDashboard() {
   const sortedSubjectCodes = Object.keys(subjectStats).sort();
   sortedSubjectCodes.forEach(subjectCode => {
       const stat = subjectStats[subjectCode];
-      const isBelowTarget = stat.total > 0 && parseFloat(stat.percentage) < attendanceTarget;
-      const cardClass = isBelowTarget ? 'stat-card below-target' : 'stat-card';
-      subjectStatsHtml += `<div class="${cardClass}"><h4>${subjectCode}</h4><p style="font-size: 1.5em; margin: 10px 0;">${stat.percentage}%</p><p style="font-size: 0.9em; color: #555;">${stat.present} / ${stat.total} classes</p></div>`;
+      const percentage = parseFloat(stat.percentage);
+      const subjectClass = getSubjectAttendanceClass(percentage);
+      const isBelowTarget = stat.total > 0 && percentage < attendanceTarget;
+      
+      subjectStatsHtml += `
+        <div class="stat-card subject-stat-card ${subjectClass} ${isBelowTarget ? 'below-target' : ''}">
+          <h4>${subjectCode}</h4>
+          <p class="subject-percentage">${stat.percentage}%</p>
+          <p style="font-size: 0.9em; color: var(--text-secondary); margin-top: 5px;">
+            ${stat.present} / ${stat.total} classes
+          </p>
+        </div>
+      `;
   });
   subjectWiseStatsDiv.innerHTML = subjectStatsHtml;
 }
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize 3D Background
-  if (typeof THREE !== 'undefined') {
-      init3dBackground();
-  }
+  // Initialize Theme
+  initTheme();
   
   // Setup Target Attendance Slider
   const attendanceTargetSlider = document.getElementById('attendanceTarget');
