@@ -3,58 +3,7 @@ let timetable = JSON.parse(localStorage.getItem('ece_timetable')) || {};
 let attendanceData = JSON.parse(localStorage.getItem('ece_attendance')) || {};
 let attendanceTarget = parseInt(localStorage.getItem('ece_attendance_target') || '75', 10);
 
-// --- 3D GAUGE GLOBALS ---
-let gaugeScene, gaugeCamera, gaugeRenderer, gaugeForegroundRing;
-const COLOR_GOOD = 0x28a745;
-const COLOR_BAD = 0xdc3545;
-
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-// --- NEW: 3D ATTENDANCE GAUGE ---
-function initAttendanceGauge() {
-    gaugeScene = new THREE.Scene();
-    const container = document.getElementById('attendanceGaugeContainer');
-    const canvas = document.getElementById('attendanceGaugeCanvas');
-
-    gaugeCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-    gaugeRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-
-    gaugeRenderer.setSize(container.clientWidth, container.clientHeight);
-    gaugeRenderer.setPixelRatio(window.devicePixelRatio);
-
-    // --- Create Gauge Rings ---
-    const ringGeometry = new THREE.RingGeometry(2, 2.3, 64);
-    
-    // Background Ring
-    const bgMaterial = new THREE.MeshBasicMaterial({ color: 0xeeeeee, side: THREE.DoubleSide });
-    const bgRing = new THREE.Mesh(ringGeometry, bgMaterial);
-    gaugeScene.add(bgRing);
-
-    // Foreground (Dynamic) Ring
-    const fgGeometry = new THREE.RingGeometry(2, 2.3, 64, 1, 0, 0); // Start at 0 length
-    const fgMaterial = new THREE.MeshBasicMaterial({ color: COLOR_GOOD, side: THREE.DoubleSide });
-    gaugeForegroundRing = new THREE.Mesh(fgGeometry, fgMaterial);
-    gaugeForegroundRing.rotation.z = Math.PI / 2; // Start from the top
-    gaugeScene.add(gaugeForegroundRing);
-    
-    gaugeCamera.position.z = 5;
-
-    // Handle resizing
-    new ResizeObserver(() => {
-        gaugeRenderer.setSize(container.clientWidth, container.clientHeight);
-        gaugeCamera.aspect = container.clientWidth / container.clientHeight;
-        gaugeCamera.updateProjectionMatrix();
-    }).observe(container);
-
-    // Animation Loop
-    function animate() {
-        requestAnimationFrame(animate);
-        gaugeForegroundRing.rotation.z -= 0.005;
-        bgRing.rotation.z = gaugeForegroundRing.rotation.z;
-        gaugeRenderer.render(gaugeScene, gaugeCamera);
-    }
-    animate();
-}
 
 /**
  * A dedicated, robust function to sort timetable slots chronologically.
@@ -68,10 +17,12 @@ function sortTimetableSlots(slotA, slotB) {
     if (isNaN(hours) || isNaN(minutes)) return [99, 99];
     return [hours, minutes];
   };
+
   const startTimeA = slotA.split('-')[0];
   const startTimeB = slotB.split('-')[0];
   const [hoursA, minutesA] = parseTime(startTimeA);
   const [hoursB, minutesB] = parseTime(startTimeB);
+
   if (hoursA !== hoursB) return hoursA - hoursB;
   return minutesA - minutesB;
 }
@@ -87,13 +38,16 @@ function getAllTimeSlots() {
 function renderTimetable() {
   const grid = document.getElementById('timetableGrid');
   const allTimeSlots = getAllTimeSlots();
+
   if (Object.keys(timetable).length === 0) {
     grid.innerHTML = '<p>No timetable data. Import your file in the "Timetable Setup" tab.</p>';
     return;
   }
+
   let tableHtml = '<table><thead><tr><th>Time</th>';
   days.forEach(day => tableHtml += `<th>${day}</th>`);
   tableHtml += '</tr></thead><tbody>';
+
   allTimeSlots.forEach(time => {
     tableHtml += `<tr><td>${time}</td>`;
     days.forEach(day => {
@@ -106,6 +60,7 @@ function renderTimetable() {
     });
     tableHtml += '</tr>';
   });
+
   tableHtml += '</tbody></table>';
   grid.innerHTML = tableHtml;
 }
@@ -137,34 +92,68 @@ function resetApplication() {
 }
 
 document.getElementById('importFile').addEventListener('change', function(event) {
-    const file = event.target.files[0]; if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = function(e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const timetableRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-        if (timetableRows.length < 2) { alert("Error: The file seems to be empty or has no data rows."); return; }
+
+        if (timetableRows.length < 2) {
+            alert("Error: The file seems to be empty or has no data rows.");
+            return;
+        }
+
         const newTimetable = {};
         const header = timetableRows[0].map(h => String(h).trim().toUpperCase());
         const dataRows = timetableRows.slice(1);
+
         const timeColumnIndex = header.findIndex(h => h === 'TIME' || h === 'TIME SLOT');
-        if (timeColumnIndex === -1) { alert("Error: Could not find a 'Time' column in the file."); return; }
-        const dayMap = { MONDAY: 'Monday', MON: 'Monday', TUESDAY: 'Tuesday', TUE: 'Tuesday', WEDNESDAY: 'Wednesday', WED: 'Wednesday', THURSDAY: 'Thursday', THU: 'Thursday', THURS: 'Thursday', FRIDAY: 'Friday', FRI: 'Friday', SATURDAY: 'Saturday', SAT: 'Saturday', SUNDAY: 'Sunday', SUN: 'Sunday' };
+        if (timeColumnIndex === -1) {
+            alert("Error: Could not find a 'Time' column in the file.");
+            return;
+        }
+
+        const dayMap = {
+            MONDAY: 'Monday', MON: 'Monday', TUESDAY: 'Tuesday', TUE: 'Tuesday',
+            WEDNESDAY: 'Wednesday', WED: 'Wednesday', THURSDAY: 'Thursday', THU: 'Thursday', THURS: 'Thursday',
+            FRIDAY: 'Friday', FRI: 'Friday', SATURDAY: 'Saturday', SAT: 'Saturday',
+            SUNDAY: 'Sunday', SUN: 'Sunday',
+        };
+
         const columnDayMap = {};
-        header.forEach((headerText, index) => { if (dayMap[headerText]) columnDayMap[index] = dayMap[headerText]; });
+        header.forEach((headerText, index) => {
+            if (dayMap[headerText]) columnDayMap[index] = dayMap[headerText];
+        });
+
         const normalizeTime = (timeStr) => {
             if (!timeStr) return null;
             timeStr = String(timeStr).trim();
-            const convertTo24Hour = (time, period) => { let [hours, minutes] = time.split(':').map(Number); if (period.toUpperCase() === 'PM' && hours < 12) hours += 12; if (period.toUpperCase() === 'AM' && hours === 12) hours = 0; return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`; };
+            
+            const convertTo24Hour = (time, period) => {
+                let [hours, minutes] = time.split(':').map(Number);
+                if (period.toUpperCase() === 'PM' && hours < 12) hours += 12;
+                if (period.toUpperCase() === 'AM' && hours === 12) hours = 0;
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            };
+            
             const timeMatch = timeStr.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})\s*(AM|PM)?/i);
-            if (timeMatch) { let [_, startTime, endTime, period] = timeMatch; if (period) return `${convertTo24Hour(startTime, period)}-${convertTo24Hour(endTime, period)}`; else return `${startTime}-${endTime}`; }
+            if (timeMatch) {
+                let [_, startTime, endTime, period] = timeMatch;
+                if (period) return `${convertTo24Hour(startTime, period)}-${convertTo24Hour(endTime, period)}`;
+                else return `${startTime}-${endTime}`;
+            }
             return timeStr.replace(/\s/g, '');
         };
+        
         dataRows.forEach(row => {
             const timeSlotRaw = row[timeColumnIndex];
             const timeSlot = normalizeTime(timeSlotRaw);
             if (!timeSlot) return;
+
             for (const colIndex in columnDayMap) {
                 const subjectString = row[colIndex];
                 if (subjectString) {
@@ -172,15 +161,24 @@ document.getElementById('importFile').addEventListener('change', function(event)
                     const subjectKey = `${day}-${timeSlot}`;
                     let code = '', name = '';
                     const trimmedSubject = String(subjectString).trim();
+
                     let match = trimmedSubject.match(/^([A-Z]{2,3}-\d{3})\s+(.*?)(?:\s+\(.*\))?$/i);
-                    if (match) { code = match[1].toUpperCase(); name = match[2].trim(); } else { code = trimmedSubject; }
+                    if (match) {
+                        code = match[1].toUpperCase();
+                        name = match[2].trim();
+                    } else {
+                        code = trimmedSubject;
+                    }
+                    
                     newTimetable[subjectKey] = { code, name, day, time: timeSlot };
                 }
             }
         });
+
         timetable = newTimetable;
         localStorage.setItem('ece_timetable', JSON.stringify(timetable));
-        renderTimetable(); updateDashboard();
+        renderTimetable();
+        updateDashboard();
         alert('Timetable imported successfully!');
     };
     reader.readAsArrayBuffer(file);
@@ -193,11 +191,19 @@ function addManualClass(event) {
     const day = document.getElementById('subjectDay').value;
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
-    if (!code || !day || !startTime || !endTime) { alert('Please fill in Subject Code, Day, Start Time, and End Time.'); return; }
+    if (!code || !day || !startTime || !endTime) {
+        alert('Please fill in Subject Code, Day, Start Time, and End Time.');
+        return;
+    }
     const timeSlot = `${startTime}-${endTime}`;
     const subjectKey = `${day}-${timeSlot}`;
-    if (timetable[subjectKey] && !confirm(`A class already exists: ${timetable[subjectKey].code}. Overwrite it?`)) { return; }
-    timetable[subjectKey] = { code: code.toUpperCase(), name, day, time: timeSlot };
+    if (timetable[subjectKey]) {
+        if (!confirm(`A class already exists: ${timetable[subjectKey].code}. Overwrite it?`)) {
+            return;
+        }
+    }
+    const newClass = { code: code.toUpperCase(), name, day, time: timeSlot };
+    timetable[subjectKey] = newClass;
     localStorage.setItem('ece_timetable', JSON.stringify(timetable));
     renderTimetable();
     alert(`Class "${code}" added successfully.`);
@@ -217,8 +223,13 @@ function loadDailySchedule() {
     if (!date) return;
     const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
     const scheduleDiv = document.getElementById('dailySchedule');
-    const subjectsForDay = Object.values(timetable).filter(s => s.day === dayOfWeek).sort((a, b) => sortTimetableSlots(a.time, b.time));
-    if (subjectsForDay.length === 0) { scheduleDiv.innerHTML = `<p>No classes scheduled for ${dayOfWeek}.</p>`; return; }
+    const subjectsForDay = Object.values(timetable)
+        .filter(s => s.day === dayOfWeek)
+        .sort((a, b) => sortTimetableSlots(a.time, b.time));
+    if (subjectsForDay.length === 0) {
+        scheduleDiv.innerHTML = `<p>No classes scheduled for ${dayOfWeek}.</p>`;
+        return;
+    }
     let scheduleHtml = '';
     subjectsForDay.forEach(subject => {
         const subjectKey = `${subject.day}-${subject.time}`;
@@ -235,9 +246,13 @@ function calculateSubjectWiseStats() {
         const [date, subjectKey] = attKey.split('_');
         const subject = timetable[subjectKey];
         if (subject && subject.code) {
-            if (!stats[subject.code]) { stats[subject.code] = { name: subject.name, total: 0, present: 0 }; }
+            if (!stats[subject.code]) {
+                stats[subject.code] = { name: subject.name, total: 0, present: 0 };
+            }
             stats[subject.code].total++;
-            if (attendanceData[attKey] === 'present') { stats[subject.code].present++; }
+            if (attendanceData[attKey] === 'present') {
+                stats[subject.code].present++;
+            }
         }
     }
     for (const code in stats) {
@@ -250,45 +265,19 @@ function calculateSubjectWiseStats() {
 function updateDashboard() {
   const statsDiv = document.getElementById('dashboardStats');
   const subjectWiseStatsDiv = document.getElementById('subjectWiseStats');
-  const gaugePercentageSpan = document.getElementById('gaugePercentage');
-  
   const totalClasses = Object.keys(attendanceData).length;
   const presentCount = Object.values(attendanceData).filter(s => s === 'present').length;
   const absentCount = Object.values(attendanceData).filter(s => s === 'absent').length;
-  const overallPercentage = totalClasses > 0 ? (presentCount / totalClasses) * 100 : 0;
-
-  // --- Update 3D Gauge ---
-  if (gaugeForegroundRing) {
-      const isBelowTarget = overallPercentage < attendanceTarget;
-      gaugeForegroundRing.material.color.setHex(isBelowTarget ? COLOR_BAD : COLOR_GOOD);
-      const newThetaLength = (overallPercentage / 100) * Math.PI * 2;
-      gaugeForegroundRing.geometry.dispose(); // Important for performance
-      gaugeForegroundRing.geometry = new THREE.RingGeometry(2, 2.3, 64, 1, 0, newThetaLength);
-      gaugePercentageSpan.textContent = `${overallPercentage.toFixed(1)}%`;
-      gaugePercentageSpan.style.color = isBelowTarget ? '#c62828' : '#2e7d32';
-  }
+  const overallPercentage = totalClasses > 0 ? ((presentCount / totalClasses) * 100).toFixed(2) : 'N/A';
+  statsDiv.innerHTML = `<div class="stat-card"><h4>📈 Overall Attendance</h4><p>${overallPercentage}%</p></div><div class="stat-card"><h4>📚 Total Classes</h4><p>${totalClasses}</p></div><div class="stat-card"><h4>✔️ Classes Attended</h4><p>${presentCount}</p></div><div class="stat-card"><h4>❌ Classes Missed</h4><p>${absentCount}</p></div>`;
   
-  // --- Update Other Stat Cards ---
-  let otherCardsHtml = `
-    <div class="stat-card"><h4>📚 Total Classes</h4><p>${totalClasses}</p></div>
-    <div class="stat-card"><h4>✔️ Classes Attended</h4><p>${presentCount}</p></div>
-    <div class="stat-card"><h4>❌ Classes Missed</h4><p>${absentCount}</p></div>
-  `;
-  // We need a temporary container to inject these cards without replacing the gauge.
-  const tempDiv = document.createElement('div');
-  statsDiv.innerHTML = ''; // Clear the container first
-  statsDiv.appendChild(document.getElementById('attendanceGaugeContainer'));
-  tempDiv.innerHTML = otherCardsHtml;
-  Array.from(tempDiv.children).forEach(child => statsDiv.appendChild(child));
-
-
-  // --- Update Subject-wise Cards ---
   const subjectStats = calculateSubjectWiseStats();
   let subjectStatsHtml = '';
   if (Object.keys(subjectStats).length === 0) {
-      subjectWiseStatsDiv.innerHTML = '<p>No attendance data recorded yet.</p>';
+      subjectWiseStatsDiv.innerHTML = '<p>No attendance data recorded yet to show subject-wise stats.</p>';
       return;
   }
+
   const sortedSubjectCodes = Object.keys(subjectStats).sort();
   sortedSubjectCodes.forEach(subjectCode => {
       const stat = subjectStats[subjectCode];
@@ -301,21 +290,20 @@ function updateDashboard() {
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
-  if (typeof THREE !== 'undefined') {
-      initAttendanceGauge();
-  }
-  
+  // Setup Target Attendance Slider
   const attendanceTargetSlider = document.getElementById('attendanceTarget');
   const targetValueSpan = document.getElementById('targetValue');
   attendanceTargetSlider.value = attendanceTarget;
   targetValueSpan.textContent = `${attendanceTarget}%`;
+
   attendanceTargetSlider.addEventListener('input', (event) => {
     attendanceTarget = parseInt(event.target.value, 10);
     targetValueSpan.textContent = `${attendanceTarget}%`;
     localStorage.setItem('ece_attendance_target', attendanceTarget);
-    updateDashboard();
+    updateDashboard(); // Re-render dashboard to apply highlighting
   });
 
+  // Setup main application
   document.getElementById('attendanceDate').valueAsDate = new Date();
   showTab('dashboard');
   renderTimetable();

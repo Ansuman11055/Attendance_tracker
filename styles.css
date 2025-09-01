@@ -8,6 +8,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     padding: 20px;
+    /* New Animated Gradient Background */
     background: linear-gradient(135deg, #667eea, #764ba2, #6a82fb, #fc5c7d);
     background-size: 400% 400%;
     animation: gradientAnimation 15s ease infinite;
@@ -29,7 +30,7 @@ body {
 }
 
 .header {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1); /* Semi-transparent white to see the gradient through */
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
@@ -37,94 +38,284 @@ body {
     text-align: center;
 }
 
-.header h1 { font-size: 2.5em; margin-bottom: 10px; font-weight: 300; }
-.header p { opacity: 0.9; font-size: 1.1em; }
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 300;
+}
 
-.nav-tabs { display: flex; background: #f4f6f8; border-bottom: 2px solid #e0e0e0; }
-.nav-tab { flex: 1; padding: 15px; background: none; border: none; font-size: 1.1em; cursor: pointer; transition: all 0.3s; color: #555; position: relative; }
-.nav-tab.active { background: white; color: #667eea; border-bottom: 2px solid #667eea; }
-.nav-tab:hover { background: #e9ecef; }
+.header p {
+    opacity: 0.9;
+    font-size: 1.1em;
+}
 
-.tab-content { display: none; padding: 30px; animation: fadeIn 0.5s; }
-.tab-content.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.nav-tabs {
+    display: flex;
+    background: #f4f6f8;
+    border-bottom: 2px solid #e0e0e0;
+}
 
-#timetableGrid { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: center; vertical-align: middle; }
-th { background: #f4f6f8; }
+.nav-tab {
+    flex: 1;
+    padding: 15px;
+    background: none;
+    border: none;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #555;
+    position: relative;
+}
 
-.subject-cell { background: #f9f9f9; cursor: pointer; transition: background 0.3s; }
-.subject-cell:hover { background: #e9ecef; }
-.subject-code { font-weight: bold; display: block; margin-bottom: 5px; }
-.subject-name { font-size: 0.9em; color: #555; }
+.nav-tab.active {
+    background: white;
+    color: #667eea;
+    border-bottom: 2px solid #667eea;
+}
 
-.date-picker { margin-bottom: 20px; }
-.date-picker input { padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+.nav-tab:hover {
+    background: #e9ecef;
+}
 
-.schedule-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; background: #fff; }
-.attendance-status button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; margin-left: 5px; }
+.tab-content {
+    display: none;
+    padding: 30px;
+    animation: fadeIn 0.5s;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#timetableGrid {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+th, td {
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+th {
+    background: #f4f6f8;
+}
+
+.subject-cell {
+    background: #f9f9f9;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.subject-cell:hover {
+    background: #e9ecef;
+}
+
+.subject-code {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.subject-name {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.date-picker {
+    margin-bottom: 20px;
+}
+
+.date-picker input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.schedule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #fff;
+}
+
+.attendance-status button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
 .present { background: #28a745; color: white; }
 .absent { background: #dc3545; color: white; }
 
-.timetable-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; align-items: start; }
-.import-export input[type="file"] { border: 1px solid #ccc; padding: 8px; border-radius: 5px; }
-.manual-add { border-left: 1px solid #e0e0e0; padding-left: 40px; }
-#manualAddForm { display: flex; flex-direction: column; gap: 15px; }
-.form-group { display: flex; flex-direction: column; }
-.form-group label { margin-bottom: 5px; font-size: 0.9em; color: #333; }
-.form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
-.time-group { display: flex; flex-direction: row; gap: 15px; }
-.time-group > div { flex: 1; display: flex; flex-direction: column; }
-.add-btn { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; transition: background-color 0.3s; }
-.add-btn:hover { background-color: #0056b3; }
-.clear-btn { padding: 10px 15px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; float: right; margin-top: 20px; margin-left: 10px; }
-.reset-all-btn { padding: 10px 15px; background-color: #7b2cbf; color: white; border: none; border-radius: 5px; cursor: pointer; float: right; margin-top: 20px; }
+.timetable-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 40px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    align-items: start;
+}
 
-#dashboardStats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; align-items: center; }
-#subjectWiseStats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-.stat-card { background: #f4f6f8; padding: 20px; border-radius: 8px; text-align: center; transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s; border: 1px solid transparent; }
-.stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-.stat-card.below-target { background-color: #ffebee; border-color: #e57373; }
-.stat-card h4 { margin-bottom: 10px; }
+.import-export input[type="file"] {
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 5px;
+}
 
-.target-attendance-control { display: flex; align-items: center; gap: 15px; margin: 15px 0; background-color: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; }
-.target-attendance-control input[type="range"] { flex-grow: 1; cursor: pointer; }
-.target-attendance-control span { font-weight: bold; color: #667eea; min-width: 50px; text-align: right; }
-.target-info { font-size: 0.9em; color: #555; margin-top: 5px; }
+.manual-add {
+    border-left: 1px solid #e0e0e0;
+    padding-left: 40px;
+}
 
-/* --- 3D Gauge Styles --- */
-#attendanceGaugeContainer {
-    grid-column: 1 / -1; /* Make it span the full width on larger screens */
-    position: relative;
-    height: 250px;
+#manualAddForm {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    flex-direction: column;
+    gap: 15px;
 }
-#attendanceGaugeCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+
+.form-group {
+    display: flex;
+    flex-direction: column;
 }
-#gaugeText {
-    position: relative;
-    z-index: 10;
-    text-align: center;
-    pointer-events: none; /* Allows mouse interaction with the canvas if needed */
-}
-#gaugePercentage {
-    display: block;
-    font-size: 3em;
-    font-weight: 300;
+
+.form-group label {
+    margin-bottom: 5px;
+    font-size: 0.9em;
     color: #333;
 }
-#gaugeLabel {
-    display: block;
-    font-size: 1.1em;
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.time-group {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+.time-group > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.add-btn {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+
+.add-btn:hover {
+    background-color: #0056b3;
+}
+
+.clear-btn {
+    padding: 10px 15px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    float: right;
+    margin-top: 20px;
+    margin-left: 10px;
+}
+
+.reset-all-btn {
+    padding: 10px 15px;
+    background-color: #7b2cbf;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    float: right;
+    margin-top: 20px;
+}
+
+#dashboardStats, #subjectWiseStats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: #f4f6f8;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+    border: 1px solid transparent;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.stat-card.below-target {
+    background-color: #ffebee;
+    border-color: #e57373;
+}
+
+.stat-card h4 {
+    margin-bottom: 10px;
+}
+
+.target-attendance-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 15px 0;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.target-attendance-control input[type="range"] {
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+.target-attendance-control span {
+    font-weight: bold;
+    color: #667eea;
+    min-width: 50px;
+    text-align: right;
+}
+
+.target-info {
+    font-size: 0.9em;
     color: #555;
+    margin-top: 5px;
 }
