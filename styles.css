@@ -1,7 +1,8 @@
 :root {
     /* Light theme colors */
-    --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --bg-secondary: #ffffff;
+    --bg-primary: transparent;
+    /* MODIFIED: Made the main background semi-transparent for the glass effect */
+    --bg-secondary: rgba(255, 255, 255, 0.75);
     --bg-tertiary: #f4f6f8;
     --text-primary: #333333;
     --text-secondary: #555555;
@@ -9,7 +10,6 @@
     --border-color: #e0e0e0;
     --hover-bg: #e9ecef;
     --card-bg: #f4f6f8;
-    /* REVERTED: Restored the animated gradient for the header */
     --header-bg: linear-gradient(-45deg, #6a82fb, #fc5c7d, #764ba2, #667eea);
     --accent-color: #667eea;
     --success-color: #28a745;
@@ -27,8 +27,9 @@
 
 [data-theme="dark"] {
     /* Dark theme colors */
-    --bg-primary: linear-gradient(135deg, #2c3e50 0%, #4a6741 100%);
-    --bg-secondary: #1a1a1a;
+    --bg-primary: transparent;
+    /* MODIFIED: Made the main background semi-transparent for the glass effect */
+    --bg-secondary: rgba(26, 26, 26, 0.75);
     --bg-tertiary: #2d2d2d;
     --text-primary: #e0e0e0;
     --text-secondary: #b0b0b0;
@@ -36,7 +37,6 @@
     --border-color: #404040;
     --hover-bg: #3a3a3a;
     --card-bg: #2d2d2d;
-    /* REVERTED: Restored the animated gradient for the header in dark mode */
     --header-bg: linear-gradient(-45deg, #2c3e50, #34495e, #4a6741, #5d4e75);
     --accent-color: #74b9ff;
     --success-color: #00b894;
@@ -58,6 +58,16 @@
     box-sizing: border-box;
 }
 
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    outline: none;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg-primary);
@@ -75,11 +85,14 @@ body {
     box-shadow: 0 20px 40px var(--shadow);
     overflow: hidden;
     transition: all 0.3s ease;
+    /* ADDED: Styles for the "frosted glass" effect */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header {
     background: var(--header-bg);
-    /* REVERTED: Added back the animation properties */
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     color: var(--text-light);
@@ -89,7 +102,6 @@ body {
     overflow: hidden;
 }
 
-/* REVERTED: Added back the gradientShift animation */
 @keyframes gradientShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -114,18 +126,17 @@ body {
 .theme-toggle {
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.3);
-    /* MODIFIED: Changed from a circle to a pill shape */
     border-radius: 30px;
-    width: auto; /* Allow width to be flexible */
+    width: auto;
     height: 50px;
-    padding: 0 15px; /* Add horizontal padding */
+    padding: 0 15px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-    gap: 10px; /* Add space between icon and text */
+    gap: 10px;
 }
 
 .theme-toggle:hover {
@@ -139,7 +150,6 @@ body {
     transition: transform 0.3s ease;
 }
 
-/* ADDED: Style for the new theme text */
 #theme-text {
     font-size: 0.9em;
     font-weight: 500;
@@ -153,23 +163,23 @@ body {
 .header h1 {
     font-size: 1.2em;
     margin-bottom: 8px;
-    font-weight: 400; /* Normal weight */
-    order: 2; /* Visually appear second */
+    font-weight: 400;
+    order: 2;
 }
 
 .header h2 {
     font-size: 2.8em;
-    font-weight: 700; /* Bold */
+    font-weight: 700;
     margin-bottom: 15px;
     color: var(--text-light);
-    order: 1; /* Visually appear first */
+    order: 1;
 }
 
 .header p {
     opacity: 1;
     font-size: 1.1em;
     color: var(--accent-color);
-    order: 3; /* Visually appear third */
+    order: 3;
 }
 
 .nav-tabs {
@@ -204,7 +214,7 @@ body {
     display: none;
     padding: 30px;
     animation: fadeIn 0.5s;
-    background: var(--bg-secondary);
+    background: transparent; /* Make tab content background transparent */
     color: var(--text-primary);
 }
 
@@ -216,6 +226,23 @@ body {
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* ADDED: Keyframes for card entrance animation */
+@keyframes slideUpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animated-card {
+    animation: slideUpFadeIn 0.6s ease-out forwards;
+}
+
 
 h3 {
     color: var(--text-primary);
@@ -464,6 +491,8 @@ th {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
+    /* ADDED: Add perspective for 3D hover effect on child cards */
+    perspective: 1500px;
 }
 
 .stat-card {
@@ -471,15 +500,17 @@ th {
     padding: 20px;
     border-radius: 8px;
     text-align: center;
-    transition: all 0.3s ease;
+    /* MODIFIED: Changed transition to handle transform */
+    transition: all 0.4s ease;
     border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
 }
 
+/* MODIFIED: Enhanced hover effect with 3D tilt */
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px var(--shadow-hover);
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 30px var(--shadow-hover);
 }
 
 .stat-card.below-target {
@@ -506,7 +537,6 @@ th {
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Attendance percentage color classes */
 .attendance-excellent {
     border-color: var(--gauge-excellent);
     color: var(--gauge-excellent);
@@ -607,7 +637,6 @@ th {
     margin-top: 5px;
 }
 
-/* Custom scrollbar for dark theme */
 [data-theme="dark"] ::-webkit-scrollbar {
     width: 8px;
 }
@@ -625,7 +654,6 @@ th {
     background: var(--text-secondary);
 }
 
-/* Subject-wise stats with enhanced styling */
 .subject-stat-card {
     background: var(--card-bg);
     padding: 20px;
@@ -651,7 +679,7 @@ th {
 }
 
 .subject-stat-card:hover {
-    transform: translateY(-5px) scale(1.02);
+    transform: translateY(-5px) scale(1.03) rotateX(5deg) rotateY(5deg);
 }
 
 .subject-excellent {
@@ -713,11 +741,11 @@ th {
         margin: 10px;
         border-radius: 10px;
     }
-
+    
     .header {
         padding: 20px;
     }
-
+    
     .header h2 {
         font-size: 2em; /* Adjusted for mobile */
     }
@@ -725,48 +753,48 @@ th {
     .header h1 {
         font-size: 1em; /* Adjusted for mobile */
     }
-
+    
     .theme-toggle-container {
         top: 15px;
         right: 15px;
     }
-
+    
     .theme-toggle {
         width: 40px;
         height: 40px;
     }
-
+    
     .nav-tabs {
         flex-direction: column;
     }
-
+    
     .nav-tab {
         padding: 12px;
         font-size: 1em;
     }
-
+    
     .timetable-actions {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-
+    
     .manual-add {
         border-left: none;
         border-top: 1px solid var(--border-color);
         padding-left: 0;
         padding-top: 20px;
     }
-
+    
     .time-group {
         flex-direction: column;
         gap: 10px;
     }
-
+    
     #dashboardStats, #subjectWiseStats {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 15px;
     }
-
+    
     .stat-card {
         padding: 15px;
     }

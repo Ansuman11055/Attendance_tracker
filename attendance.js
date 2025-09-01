@@ -10,10 +10,8 @@ function initTheme() {
     const savedTheme = localStorage.getItem('ece_theme') || 'light';
     const themeToggle = document.getElementById('themeToggle');
     
-    // Set initial theme
     setTheme(savedTheme);
     
-    // Theme toggle event listener
     themeToggle.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -24,15 +22,13 @@ function initTheme() {
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         const themeIcon = document.querySelector('.theme-icon');
-        const themeText = document.getElementById('theme-text'); // Get the text element
+        const themeText = document.getElementById('theme-text');
 
         themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-        // ADDED: Logic to update the text content based on the current theme
         if (themeText) {
             themeText.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
         }
         
-        // Add a nice animation effect
         document.documentElement.style.transition = 'all 0.3s ease';
         setTimeout(() => {
             document.documentElement.style.transition = '';
@@ -40,7 +36,68 @@ function initTheme() {
     }
 }
 
-// Attendance gauge color logic
+// ADDED: Function to animate numbers counting up
+function animateCountUp(el) {
+    const text = el.innerText;
+    const target = parseFloat(text.replace('%', ''));
+    if (isNaN(target)) return;
+
+    el.innerText = '0';
+    let current = 0;
+    const increment = target / 100;
+    const interval = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            clearInterval(interval);
+            el.innerText = text;
+        } else {
+            // Check if target is a float or integer for correct formatting
+            if (text.includes('.')) {
+                el.innerText = `${current.toFixed(2)}%`;
+            } else {
+                el.innerText = Math.ceil(current);
+            }
+        }
+    }, 15);
+}
+
+
+// ADDED: Function to handle animations on the dashboard
+function triggerDashboardAnimations() {
+    const cards = document.querySelectorAll('#dashboard .stat-card, #dashboard .subject-stat-card');
+    cards.forEach((card, index) => {
+        // Reset state by removing class and hiding
+        card.classList.remove('animated-card');
+        card.style.opacity = '0';
+        
+        // Trigger staggered entrance animation
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.classList.add('animated-card');
+        }, index * 100);
+
+        // Trigger count-up animation for numbers inside the card
+        const percentageEl = card.querySelector('.attendance-percentage, .subject-percentage');
+        const numberEl = card.querySelector('p:not([class])'); // Targets the simple number <p> tags
+        if (percentageEl) animateCountUp(percentageEl);
+        if (numberEl) animateCountUp(numberEl);
+    });
+}
+
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelector(`.nav-tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+
+  // MODIFIED: Trigger animations whenever the dashboard tab is shown
+  if (tabName === 'dashboard') {
+      triggerDashboardAnimations();
+  }
+}
+
+// ... (rest of attendance.js code is unchanged) ...
+
 function getAttendanceClass(percentage) {
     if (percentage >= 85) return 'excellent';
     if (percentage >= 70) return 'good';
@@ -53,9 +110,6 @@ function getSubjectAttendanceClass(percentage) {
     return 'subject-poor';
 }
 
-/**
- * A dedicated, robust function to sort timetable slots chronologically.
- */
 function sortTimetableSlots(slotA, slotB) {
   const parseTime = (timeStr) => {
     if (!timeStr || !timeStr.includes(':')) return [99, 99];
@@ -111,13 +165,6 @@ function renderTimetable() {
 
   tableHtml += '</tbody></table>';
   grid.innerHTML = tableHtml;
-}
-
-function showTab(tabName) {
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-  document.getElementById(tabName).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-  document.querySelector(`.nav-tab[onclick="showTab('${tabName}')"]`).classList.add('active');
 }
 
 function clearTimetable() {
@@ -318,11 +365,9 @@ function updateDashboard() {
   const absentCount = Object.values(attendanceData).filter(s => s === 'absent').length;
   const overallPercentage = totalClasses > 0 ? ((presentCount / totalClasses) * 100).toFixed(2) : 0;
   
-  // Get dynamic class for overall attendance
   const overallAttendanceClass = totalClasses > 0 ? getAttendanceClass(parseFloat(overallPercentage)) : '';
   const displayPercentage = totalClasses > 0 ? `${overallPercentage}%` : 'N/A';
   
-  // Enhanced dashboard stats with dynamic gauge
   statsDiv.innerHTML = `
     <div class="stat-card attendance-gauge attendance-${overallAttendanceClass}">
       <h4>📈 Overall Attendance</h4>
@@ -369,12 +414,9 @@ function updateDashboard() {
   subjectWiseStatsDiv.innerHTML = subjectStatsHtml;
 }
 
-// Initial Load
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize Theme
   initTheme();
   
-  // Setup Target Attendance Slider
   const attendanceTargetSlider = document.getElementById('attendanceTarget');
   const targetValueSpan = document.getElementById('targetValue');
   attendanceTargetSlider.value = attendanceTarget;
@@ -387,12 +429,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDashboard();
   });
 
-  // Setup main application
   document.getElementById('attendanceDate').valueAsDate = new Date();
-  showTab('dashboard');
   renderTimetable();
   loadDailySchedule();
   updateDashboard();
+  showTab('dashboard'); // Show dashboard on initial load to trigger animations
   document.getElementById('attendanceDate').addEventListener('change', loadDailySchedule);
   document.getElementById('manualAddForm').addEventListener('submit', addManualClass);
 });
