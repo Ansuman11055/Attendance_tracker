@@ -29,6 +29,7 @@ function initTheme() {
             themeText.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
         }
         
+        // This event is used by the 3d-background.js to know when to change its color.
         window.dispatchEvent(new CustomEvent('themechanged'));
 
         document.documentElement.style.transition = 'all 0.3s ease';
@@ -38,7 +39,7 @@ function initTheme() {
     }
 }
 
-// RESTORED: Original tab switching function
+// Tab switching function
 function showTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
   document.getElementById(tabName).classList.add('active');

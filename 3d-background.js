@@ -27,9 +27,8 @@ function init3DBackground() {
         ];
         const material = new THREE.MeshNormalMaterial();
 
-        // MODIFIED: Check for mobile screen size to optimize performance
         const isMobile = window.innerWidth <= 768;
-        const shapeCount = isMobile ? 20 : 50; // Render 20 shapes on mobile, 50 on desktop
+        const shapeCount = isMobile ? 20 : 50;
 
         for (let i = 0; i < shapeCount; i++) {
             const geometry = geometries[Math.floor(Math.random() * geometries.length)];
@@ -54,12 +53,23 @@ function init3DBackground() {
         return shapeGroup;
     }
     
-    // --- Mouse Interaction ---
+    // --- Mouse and Touch Interaction ---
     const mouse = { x: 0, y: 0 };
-    document.addEventListener('mousemove', (event) => {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    });
+
+    // ADDED: A single function to handle updating the position from both mouse and touch events
+    function updatePosition(event) {
+        const x = event.touches ? event.touches[0].clientX : event.clientX;
+        const y = event.touches ? event.touches[0].clientY : event.clientY;
+
+        // Normalize position from -1 to 1
+        mouse.x = (x / window.innerWidth) * 2 - 1;
+        mouse.y = -(y / window.innerHeight) * 2 + 1;
+    }
+
+    // MODIFIED: Added event listeners for both mouse and touch movements
+    document.addEventListener('mousemove', updatePosition);
+    document.addEventListener('touchmove', updatePosition);
+
 
     // --- Animation Loop ---
     function animate() {
