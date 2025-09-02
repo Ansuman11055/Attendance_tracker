@@ -23,11 +23,18 @@ function initTheme() {
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         const themeIcon = document.querySelector('.theme-icon');
+        const themeText = document.getElementById('theme-text');
 
         themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        if (themeText) {
+            themeText.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+        }
+        
+        window.dispatchEvent(new CustomEvent('themechanged'));
     }
 }
 
+// Tab switching function
 function showTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
   document.getElementById(tabName).classList.add('active');
@@ -154,9 +161,14 @@ function renderTimetable() {
     grid.innerHTML = '<p>No timetable data. Import your file in the "Timetable Setup" tab.</p>';
     return;
   }
+  
+  const isMobile = window.innerWidth <= 768;
+  const displayDays = isMobile 
+    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] 
+    : days;
 
   let tableHtml = '<table><thead><tr><th>Time</th>';
-  days.forEach(day => tableHtml += `<th>${day}</th>`);
+  displayDays.forEach(day => tableHtml += `<th>${day}</th>`);
   tableHtml += '</tr></thead><tbody>';
 
   allTimeSlots.forEach(time => {

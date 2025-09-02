@@ -86,8 +86,6 @@ body {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-    z-index: 1;
 }
 
 .header {
@@ -869,5 +867,21 @@ th {
 
     .subject-percentage {
         font-size: 1.8em !important;
+    }
+
+    #timetableGrid th, #timetableGrid td {
+        padding: 8px 3px;
+        font-size: 0.75em;
+        min-width: 35px;
+    }
+
+    #timetableGrid .subject-code {
+        font-size: 1em;
+        margin-bottom: 2px;
+    }
+
+    #timetableGrid .subject-name {
+        font-size: 0.9em;
+        word-break: break-word;
     }
 }
