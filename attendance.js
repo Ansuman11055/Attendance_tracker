@@ -299,9 +299,7 @@ async function resetApplication() {
     }
 }
 
-function importTimetable() {
-    const file = selectedTimetableFile;
-
+function importTimetable(file) {
     if (!file) {
         showToast('Please select a timetable file first.', 'error');
         return;
@@ -615,9 +613,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('attendanceDate').addEventListener('change', loadDailySchedule);
     document.getElementById('timetableGrid').addEventListener('click', handleTimetableCellClick);
     
-    document.getElementById('importFile').addEventListener('change', (event) => {
+    const fileInput = document.getElementById('importFile');
+    const importButton = document.getElementById('importBtn');
+    
+    fileInput.addEventListener('change', (event) => {
         selectedTimetableFile = event.target.files[0];
     });
 
-    document.getElementById('importBtn').addEventListener('click', importTimetable);
+    importButton.addEventListener('click', () => {
+        importTimetable(selectedTimetableFile);
+    });
 });

@@ -871,18 +871,16 @@ th {
 
     #timetableGrid th, #timetableGrid td {
         padding: 4px 2px;
-        font-size: 11px; /* Further reduced font size */
+        font-size: 11px;
         min-width: 35px;
     }
 
-    /* MODIFIED: Enforcing ellipsis truncation on mobile */
     #timetableGrid .subject-code,
     #timetableGrid .subject-name {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 90%; /* Constrain width to allow ellipsis to work */
-        margin: 0 auto; /* Center the constrained divs */
+        max-width: 100%;
     }
 
     #timetableGrid .subject-code {
@@ -894,7 +892,10 @@ th {
         font-size: 0.9em;
     }
 
+    /* REMOVED: This rule was hiding the button on mobile */
+    /*
     #importBtn {
         display: none;
     }
+    */
 }
