@@ -117,23 +117,21 @@ body {
     align-items: center;
 }
 
-/* MODIFIED: theme-toggle-container for top-right page position */
 .theme-toggle-container {
-    position: fixed; /* Changed from absolute to fixed */
+    position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1000; /* High z-index to ensure it's always on top */
-    transform: none; /* Reset transform */
+    z-index: 1000;
+    transform: none;
 }
 
-/* MODIFIED: Styles for an icon-only circular button */
 .theme-toggle {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 50%; /* Make it a perfect circle */
-    width: 50px; /* Fixed width */
-    height: 50px; /* Fixed height */
-    padding: 0; /* Remove padding */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -153,7 +151,6 @@ body {
     transition: transform 0.3s ease;
 }
 
-/* MODIFIED: Hide the theme text */
 #theme-text {
     display: none;
 }
@@ -169,7 +166,6 @@ body {
     color: var(--text-light);
     order: 1;
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-    /* MODIFIED: Reduced letter spacing */
     letter-spacing: 0.5px;
 }
 
@@ -181,7 +177,6 @@ body {
     background: linear-gradient(90deg, #e0e0e0, #ffffff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    /* MODIFIED: Set to normal */
     letter-spacing: normal;
 }
 
@@ -193,7 +188,6 @@ body {
     position: relative;
     display: inline-block;
     padding-bottom: 5px;
-    /* MODIFIED: Set to normal */
     letter-spacing: normal;
 }
 
@@ -383,6 +377,12 @@ th {
     padding-top: 20px;
     border-top: 1px solid var(--border-color);
     align-items: start;
+}
+
+.import-export {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .import-export input[type="file"] {

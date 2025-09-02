@@ -52,11 +52,88 @@ function showTab(tabName) {
 }
 
 // --- ANIMATION LOGIC ---
-// ... (Animation functions are unchanged) ...
+
+function triggerDashboardAnimations() {
+    const cards = document.querySelectorAll('#dashboard .stat-card, #dashboard .subject-stat-card');
+    
+    cards.forEach(card => {
+        card.style.opacity = '0';
+        const percentageEl = card.querySelector('.attendance-percentage, .subject-percentage');
+        const numberEl = card.querySelector('p:not([class])'); 
+        if (percentageEl) animateCountUp(percentageEl);
+        if (numberEl) animateCountUp(numberEl);
+    });
+
+    anime.timeline({
+        easing: 'easeOutExpo',
+    })
+    .add({
+        targets: cards,
+        opacity: [0, 1],
+        translateY: [40, 0],
+        translateZ: [-300, 0],
+        rotateX: ['-90deg', '0deg'],
+        delay: anime.stagger(80),
+        duration: 1200
+    });
+}
+
+function animateCountUp(el) {
+    const text = el.innerText;
+    const target = parseFloat(text.replace('%', ''));
+    if (isNaN(target)) return;
+
+    el.innerText = '0';
+    let current = 0;
+    const increment = target / 100;
+    const interval = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            clearInterval(interval);
+            el.innerText = text;
+        } else {
+            if (text.includes('.')) {
+                el.innerText = `${current.toFixed(2)}%`;
+            } else {
+                el.innerText = Math.ceil(current);
+            }
+        }
+    }, 15);
+}
+
+function initTimetableWaveEffect() {
+    const cells = document.querySelectorAll('#timetable .subject-cell');
+
+    cells.forEach(cell => {
+        cell.addEventListener('mouseenter', function() {
+            anime.remove(this);
+            anime({
+                targets: this,
+                scale: 1.05,
+                translateZ: 20,
+                rotateY: anime.random(-10, 10),
+                duration: 400,
+                easing: 'easeOutSine'
+            });
+        });
+
+        cell.addEventListener('mouseleave', function() {
+            anime.remove(this);
+            anime({
+                targets: this,
+                scale: 1,
+                translateZ: 0,
+                rotateY: 0,
+                duration: 600,
+                easing: 'easeOutElastic(1, .6)'
+            });
+        });
+    });
+}
+
 
 // --- Main Application Logic ---
 
-// MODIFIED: Added a data-key attribute to each cell to identify it for deletion.
 function renderTimetable() {
   const grid = document.getElementById('timetableGrid');
   const allTimeSlots = getAllTimeSlots();
@@ -89,7 +166,6 @@ function renderTimetable() {
   initTimetableWaveEffect();
 }
 
-// ADDED: Function to handle clicking on a timetable cell to remove a class.
 function handleTimetableCellClick(event) {
     const cell = event.target.closest('.subject-cell');
     if (!cell) return;
@@ -104,125 +180,9 @@ function handleTimetableCellClick(event) {
         delete timetable[key];
         localStorage.setItem('timetable', JSON.stringify(timetable));
         renderTimetable();
-        updateDashboard(); // In case this affects any future stats
+        updateDashboard();
         alert(`Class "${subject.code}" has been removed.`);
     }
-}
-
-
-// ... (The rest of the core logic functions are unchanged) ...
-
-
-// Initial Load
-document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-
-    const attendanceTargetSlider = document.getElementById('attendanceTarget');
-    const targetValueSpan = document.getElementById('targetValue');
-    attendanceTargetSlider.value = attendanceTarget;
-    targetValueSpan.textContent = `${attendanceTarget}%`;
-
-    attendanceTargetSlider.addEventListener('input', (event) => {
-        attendanceTarget = parseInt(event.target.value, 10);
-        targetValueSpan.textContent = `${attendanceTarget}%`;
-        localStorage.setItem('ece_attendance_target', attendanceTarget);
-        updateDashboard();
-    });
-
-    document.getElementById('attendanceDate').valueAsDate = new Date();
-
-    renderTimetable();
-    loadDailySchedule();
-    updateDashboard();
-
-    showTab('dashboard'); 
-
-    initTimetableWaveEffect();
-
-    document.getElementById('manualAddForm').addEventListener('submit', addManualClass);
-    document.getElementById('attendanceDate').addEventListener('change', loadDailySchedule);
-    
-    // ADDED: Event listener for the timetable grid using event delegation.
-    document.getElementById('timetableGrid').addEventListener('click', handleTimetableCellClick);
-});
-
-// PASTE OF UNCHANGED FUNCTIONS FOR COMPLETENESS
-function animateCountUp(el) {
-    const text = el.innerText;
-    const target = parseFloat(text.replace('%', ''));
-    if (isNaN(target)) return;
-
-    el.innerText = '0';
-    let current = 0;
-    const increment = target / 100;
-    const interval = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            clearInterval(interval);
-            el.innerText = text;
-        } else {
-            if (text.includes('.')) {
-                el.innerText = `${current.toFixed(2)}%`;
-            } else {
-                el.innerText = Math.ceil(current);
-            }
-        }
-    }, 15);
-}
-
-function triggerDashboardAnimations() {
-    const cards = document.querySelectorAll('#dashboard .stat-card, #dashboard .subject-stat-card');
-    
-    cards.forEach(card => {
-        card.style.opacity = '0';
-        const percentageEl = card.querySelector('.attendance-percentage, .subject-percentage');
-        const numberEl = card.querySelector('p:not([class])'); 
-        if (percentageEl) animateCountUp(percentageEl);
-        if (numberEl) animateCountUp(numberEl);
-    });
-
-    anime.timeline({
-        easing: 'easeOutExpo',
-    })
-    .add({
-        targets: cards,
-        opacity: [0, 1],
-        translateY: [40, 0],
-        translateZ: [-300, 0],
-        rotateX: ['-90deg', '0deg'],
-        delay: anime.stagger(80),
-        duration: 1200
-    });
-}
-
-function initTimetableWaveEffect() {
-    const cells = document.querySelectorAll('#timetable .subject-cell');
-
-    cells.forEach(cell => {
-        cell.addEventListener('mouseenter', function() {
-            anime.remove(this);
-            anime({
-                targets: this,
-                scale: 1.05,
-                translateZ: 20,
-                rotateY: anime.random(-10, 10),
-                duration: 400,
-                easing: 'easeOutSine'
-            });
-        });
-
-        cell.addEventListener('mouseleave', function() {
-            anime.remove(this);
-            anime({
-                targets: this,
-                scale: 1,
-                translateZ: 0,
-                rotateY: 0,
-                duration: 600,
-                easing: 'easeOutElastic(1, .6)'
-            });
-        });
-    });
 }
 
 function getAttendanceClass(percentage) {
@@ -264,6 +224,16 @@ function getAllTimeSlots() {
   return Array.from(timeSlots).sort(sortTimetableSlots);
 }
 
+function clearTimetable() {
+  if (confirm('Are you sure you want to clear all timetable data? This action cannot be undone.')) {
+    timetable = {};
+    localStorage.removeItem('timetable');
+    renderTimetable();
+    updateDashboard();
+    alert('Timetable cleared.');
+  }
+}
+
 function resetApplication() {
   if (confirm('DANGER: This will permanently delete ALL timetable and attendance data. This action cannot be undone. Are you sure you want to proceed?')) {
     localStorage.removeItem('timetable');
@@ -273,9 +243,14 @@ function resetApplication() {
   }
 }
 
-document.getElementById('importFile').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+function importTimetable() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert('Please select a timetable file first.');
+        return;
+    }
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -364,7 +339,7 @@ document.getElementById('importFile').addEventListener('change', function(event)
         alert('Timetable imported successfully!');
     };
     reader.readAsArrayBuffer(file);
-});
+}
 
 function addManualClass(event) {
     event.preventDefault();
@@ -543,3 +518,35 @@ function updateDashboard() {
   });
   subjectWiseStatsDiv.innerHTML = subjectStatsHtml;
 }
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+
+    const attendanceTargetSlider = document.getElementById('attendanceTarget');
+    const targetValueSpan = document.getElementById('targetValue');
+    attendanceTargetSlider.value = attendanceTarget;
+    targetValueSpan.textContent = `${attendanceTarget}%`;
+
+    attendanceTargetSlider.addEventListener('input', (event) => {
+        attendanceTarget = parseInt(event.target.value, 10);
+        targetValueSpan.textContent = `${attendanceTarget}%`;
+        localStorage.setItem('ece_attendance_target', attendanceTarget);
+        updateDashboard();
+    });
+
+    document.getElementById('attendanceDate').valueAsDate = new Date();
+
+    renderTimetable();
+    loadDailySchedule();
+    updateDashboard();
+
+    showTab('dashboard'); 
+
+    initTimetableWaveEffect();
+
+    document.getElementById('manualAddForm').addEventListener('submit', addManualClass);
+    document.getElementById('attendanceDate').addEventListener('change', loadDailySchedule);
+    document.getElementById('timetableGrid').addEventListener('click', handleTimetableCellClick);
+    document.getElementById('importBtn').addEventListener('click', importTimetable);
+});
