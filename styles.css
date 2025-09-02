@@ -52,18 +52,23 @@
     box-sizing: border-box;
 }
 
+html {
+    background: var(--scene-bg);
+}
+
 #bg-canvas {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
+    z-index: -1;
     outline: none;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--scene-bg);
+    font-family: 'Montserrat', sans-serif;
+    background: transparent;
     min-height: 100vh;
     padding: 20px;
     color: var(--text-primary);
@@ -81,8 +86,6 @@ body {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-    z-index: 1;
 }
 
 .header {
@@ -93,6 +96,11 @@ body {
     padding: 30px;
     text-align: center;
     position: relative;
+    transition: transform 0.3s ease-in-out;
+}
+
+.header:hover {
+    transform: scale(1.005);
 }
 
 @keyframes gradientShift {
@@ -109,32 +117,34 @@ body {
     align-items: center;
 }
 
+/* MODIFIED: theme-toggle-container for top-right page position */
 .theme-toggle-container {
-    position: absolute;
+    position: fixed; /* Changed from absolute to fixed */
     top: 20px;
     right: 20px;
-    z-index: 10;
+    z-index: 1000; /* High z-index to ensure it's always on top */
+    transform: none; /* Reset transform */
 }
 
+/* MODIFIED: Styles for an icon-only circular button */
 .theme-toggle {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 30px;
-    width: auto;
-    height: 50px;
-    padding: 0 15px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 50%; /* Make it a perfect circle */
+    width: 50px; /* Fixed width */
+    height: 50px; /* Fixed height */
+    padding: 0; /* Remove padding */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    gap: 10px;
+    box-shadow: 0 4px 12px var(--shadow);
 }
 
 .theme-toggle:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: var(--hover-bg);
+    border-color: var(--accent-color);
     transform: scale(1.1);
 }
 
@@ -143,10 +153,9 @@ body {
     transition: transform 0.3s ease;
 }
 
+/* MODIFIED: Hide the theme text */
 #theme-text {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--text-light);
+    display: none;
 }
 
 .theme-toggle:hover .theme-icon {
@@ -158,14 +167,22 @@ body {
     font-weight: 700;
     margin-bottom: 15px;
     color: var(--text-light);
-    order: 1; 
+    order: 1;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+    /* MODIFIED: Reduced letter spacing */
+    letter-spacing: 0.5px;
 }
 
 .header h2 {
     font-size: 1.2em;
     margin-bottom: 8px;
     font-weight: 400;
-    order: 2; 
+    order: 2;
+    background: linear-gradient(90deg, #e0e0e0, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* MODIFIED: Set to normal */
+    letter-spacing: normal;
 }
 
 .header p {
@@ -173,6 +190,26 @@ body {
     font-size: 1.1em;
     color: var(--accent-color);
     order: 3;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 5px;
+    /* MODIFIED: Set to normal */
+    letter-spacing: normal;
+}
+
+.header p::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease-out;
+}
+
+.header p:hover::after {
+    width: 100%;
 }
 
 .nav-tabs {
@@ -220,21 +257,6 @@ body {
     to { opacity: 1; }
 }
 
-@keyframes slideUpFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animated-card {
-    animation: slideUpFadeIn 0.6s ease-out forwards;
-}
-
 h3 {
     color: var(--text-primary);
     margin-bottom: 20px;
@@ -251,6 +273,7 @@ p {
 
 #timetableGrid {
     overflow-x: auto;
+    perspective: 1200px;
 }
 
 table {
@@ -275,7 +298,7 @@ th {
 .subject-cell {
     background: var(--card-bg);
     cursor: pointer;
-    transition: background 0.3s;
+    transition: transform 0.4s ease-out;
 }
 
 .subject-cell:hover {
@@ -374,6 +397,19 @@ th {
 .manual-add {
     border-left: 1px solid var(--border-color);
     padding-left: 40px;
+    perspective: 800px;
+    position: relative;
+}
+
+#form-success-message {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--success-color);
+    font-size: 1.5em;
+    font-weight: 600;
 }
 
 #manualAddForm {
@@ -494,6 +530,7 @@ th {
     border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
+    opacity: 0;
 }
 
 .stat-card:hover {
@@ -651,6 +688,7 @@ th {
     border: 2px solid;
     position: relative;
     overflow: hidden;
+    opacity: 0;
 }
 
 .subject-stat-card::before {
@@ -740,19 +778,22 @@ th {
     
     .header h1 {
         font-size: 1.8em;
+        letter-spacing: 0.5px;
     }
 
     .header h2 {
         font-size: 1em; 
+        letter-spacing: normal;
     }
     
     .theme-toggle-container {
         top: 15px;
         right: 15px;
     }
-    
-    #theme-text {
-        display: none;
+
+    .theme-toggle {
+        width: 45px;
+        height: 45px;
     }
     
     .nav-tab {
