@@ -875,14 +875,13 @@ th {
         min-width: 35px;
     }
 
-    #timetableGrid .subject-code,
-    #timetableGrid .subject-name {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    #timetableGrid .subject-code {
+        font-size: 1em;
+        margin-bottom: 2px;
     }
 
-    #importBtn {
-        display: none;
+    #timetableGrid .subject-name {
+        font-size: 0.9em;
+        word-break: break-word;
     }
 }
