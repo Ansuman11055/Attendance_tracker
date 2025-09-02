@@ -870,9 +870,19 @@ th {
     }
 
     #timetableGrid th, #timetableGrid td {
-        padding: 8px 3px;
-        font-size: 0.75em;
+        padding: 4px 2px;
+        font-size: 11px; /* Further reduced font size */
         min-width: 35px;
+    }
+
+    /* MODIFIED: Enforcing ellipsis truncation on mobile */
+    #timetableGrid .subject-code,
+    #timetableGrid .subject-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 90%; /* Constrain width to allow ellipsis to work */
+        margin: 0 auto; /* Center the constrained divs */
     }
 
     #timetableGrid .subject-code {
@@ -882,6 +892,9 @@ th {
 
     #timetableGrid .subject-name {
         font-size: 0.9em;
-        word-break: break-word;
+    }
+
+    #importBtn {
+        display: none;
     }
 }
