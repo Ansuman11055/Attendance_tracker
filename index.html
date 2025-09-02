@@ -10,21 +10,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="styles.css">
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
 
+<div class="theme-toggle-container">
+  <button id="themeToggle" class="theme-toggle">
+    <span class="theme-icon">🌙</span>
+  </button>
+</div>
+
 <div class="container">
 
   <div class="header">
-    <div class="theme-toggle-container">
-      <button id="themeToggle" class="theme-toggle">
-        <span class="theme-icon">🌙</span>
-      </button>
-    </div>
     <div class="header-content">
       <h1>Indian Institute of Technology Mandi</h1>
       <h2>Attendance Tracker</h2>
@@ -118,6 +123,8 @@
   </div>
 
 </div>
+
+<div id="toast-notification" class="toast"></div>
 
 <script src="attendance.js"></script>
 <script src="3d-background.js"></script>

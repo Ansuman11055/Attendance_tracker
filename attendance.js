@@ -4,6 +4,7 @@ let attendanceData = JSON.parse(localStorage.getItem('ece_attendance')) || {};
 let attendanceTarget = parseInt(localStorage.getItem('ece_attendance_target') || '75', 10);
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+let selectedTimetableFile = null;
 
 // Theme Management
 function initTheme() {
@@ -22,23 +23,11 @@ function initTheme() {
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         const themeIcon = document.querySelector('.theme-icon');
-        const themeText = document.getElementById('theme-text');
 
         themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-        if (themeText) {
-            themeText.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
-        }
-        
-        window.dispatchEvent(new CustomEvent('themechanged'));
-
-        document.documentElement.style.transition = 'all 0.3s ease';
-        setTimeout(() => {
-            document.documentElement.style.transition = '';
-        }, 300);
     }
 }
 
-// Tab switching function
 function showTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
   document.getElementById(tabName).classList.add('active');
@@ -52,6 +41,26 @@ function showTab(tabName) {
 }
 
 // --- ANIMATION LOGIC ---
+let toastTimeout;
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast-notification');
+    if (!toast) return;
+
+    clearTimeout(toastTimeout);
+
+    toast.textContent = message;
+    toast.className = 'toast show'; 
+    if (type === 'error') {
+        toast.classList.add('error');
+    } else {
+        toast.classList.add('success');
+    }
+
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
 
 function triggerDashboardAnimations() {
     const cards = document.querySelectorAll('#dashboard .stat-card, #dashboard .subject-stat-card');
@@ -102,32 +111,35 @@ function animateCountUp(el) {
 }
 
 function initTimetableWaveEffect() {
-    const cells = document.querySelectorAll('#timetable .subject-cell');
-
-    cells.forEach(cell => {
-        cell.addEventListener('mouseenter', function() {
-            anime.remove(this);
+    const grid = document.getElementById('timetableGrid');
+    grid.addEventListener('mouseover', (event) => {
+        const cell = event.target.closest('.subject-cell');
+        if (cell) {
+            anime.remove(cell);
             anime({
-                targets: this,
+                targets: cell,
                 scale: 1.05,
                 translateZ: 20,
                 rotateY: anime.random(-10, 10),
                 duration: 400,
                 easing: 'easeOutSine'
             });
-        });
+        }
+    });
 
-        cell.addEventListener('mouseleave', function() {
-            anime.remove(this);
+    grid.addEventListener('mouseout', (event) => {
+        const cell = event.target.closest('.subject-cell');
+        if (cell) {
+            anime.remove(cell);
             anime({
-                targets: this,
+                targets: cell,
                 scale: 1,
                 translateZ: 0,
                 rotateY: 0,
                 duration: 600,
                 easing: 'easeOutElastic(1, .6)'
             });
-        });
+        }
     });
 }
 
@@ -163,10 +175,9 @@ function renderTimetable() {
 
   tableHtml += '</tbody></table>';
   grid.innerHTML = tableHtml;
-  initTimetableWaveEffect();
 }
 
-function handleTimetableCellClick(event) {
+async function handleTimetableCellClick(event) {
     const cell = event.target.closest('.subject-cell');
     if (!cell) return;
 
@@ -174,14 +185,24 @@ function handleTimetableCellClick(event) {
     if (!key || !timetable[key]) return;
 
     const subject = timetable[key];
-    const confirmation = confirm(`Are you sure you want to remove the class "${subject.code}" on ${subject.day} at ${subject.time}?`);
+    
+    const result = await Swal.fire({
+        title: 'Remove Class?',
+        text: `Are you sure you want to remove "${subject.code}" on ${subject.day} at ${subject.time}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, remove it',
+        cancelButtonText: 'Cancel',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+    });
 
-    if (confirmation) {
+    if (result.isConfirmed) {
         delete timetable[key];
         localStorage.setItem('timetable', JSON.stringify(timetable));
         renderTimetable();
         updateDashboard();
-        alert(`Class "${subject.code}" has been removed.`);
+        showToast(`Class "${subject.code}" has been removed.`, 'success');
     }
 }
 
@@ -224,31 +245,53 @@ function getAllTimeSlots() {
   return Array.from(timeSlots).sort(sortTimetableSlots);
 }
 
-function clearTimetable() {
-  if (confirm('Are you sure you want to clear all timetable data? This action cannot be undone.')) {
-    timetable = {};
-    localStorage.removeItem('timetable');
-    renderTimetable();
-    updateDashboard();
-    alert('Timetable cleared.');
-  }
+async function clearTimetable() {
+    const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "This will clear all timetable data. This action cannot be undone.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, clear it!',
+        cancelButtonText: 'Cancel',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+    });
+
+    if (result.isConfirmed) {
+        timetable = {};
+        localStorage.removeItem('timetable');
+        renderTimetable();
+        updateDashboard();
+        showToast('Timetable cleared.', 'success');
+    }
 }
 
-function resetApplication() {
-  if (confirm('DANGER: This will permanently delete ALL timetable and attendance data. This action cannot be undone. Are you sure you want to proceed?')) {
-    localStorage.removeItem('timetable');
-    localStorage.removeItem('ece_attendance');
-    localStorage.removeItem('ece_attendance_target');
-    location.reload();
-  }
+async function resetApplication() {
+    const result = await Swal.fire({
+        title: 'DANGER!',
+        html: "This will permanently delete <strong>ALL</strong> timetable and attendance data. <br>This action cannot be undone.",
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete everything!',
+        cancelButtonText: 'Cancel',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)',
+        confirmButtonColor: 'var(--danger-color)'
+    });
+
+    if (result.isConfirmed) {
+        localStorage.removeItem('timetable');
+        localStorage.removeItem('ece_attendance');
+        localStorage.removeItem('ece_attendance_target');
+        location.reload();
+    }
 }
 
 function importTimetable() {
-    const fileInput = document.getElementById('importFile');
-    const file = fileInput.files[0];
+    const file = selectedTimetableFile;
 
     if (!file) {
-        alert('Please select a timetable file first.');
+        showToast('Please select a timetable file first.', 'error');
         return;
     }
 
@@ -260,7 +303,7 @@ function importTimetable() {
         const timetableRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
         if (timetableRows.length < 2) {
-            alert("Error: The file seems to be empty or has no data rows.");
+            showToast("Error: The file seems to be empty or has no data rows.", 'error');
             return;
         }
 
@@ -270,7 +313,7 @@ function importTimetable() {
 
         const timeColumnIndex = header.findIndex(h => h === 'TIME' || h === 'TIME SLOT');
         if (timeColumnIndex === -1) {
-            alert("Error: Could not find a 'Time' column in the file.");
+            showToast("Error: Could not find a 'Time' column in the file.", 'error');
             return;
         }
 
@@ -336,12 +379,12 @@ function importTimetable() {
         localStorage.setItem('timetable', JSON.stringify(timetable));
         renderTimetable();
         updateDashboard();
-        alert('Timetable imported successfully!');
+        showToast('Timetable imported successfully!', 'success');
     };
     reader.readAsArrayBuffer(file);
 }
 
-function addManualClass(event) {
+async function addManualClass(event) {
     event.preventDefault();
     const code = document.getElementById('subjectCode').value.trim();
     const name = document.getElementById('subjectName').value.trim();
@@ -350,14 +393,25 @@ function addManualClass(event) {
     const endTime = document.getElementById('endTime').value;
 
     if (!code || !day || !startTime || !endTime) {
-        alert('Please fill in Subject Code, Day, Start Time, and End Time.');
+        showToast('Please fill in all required fields.', 'error');
         return;
     }
 
     const timeSlot = `${startTime}-${endTime}`;
     const subjectKey = `${day}-${timeSlot}`;
     if (timetable[subjectKey]) {
-        if (!confirm(`A class already exists: ${timetable[subjectKey].code}. Overwrite it?`)) {
+        const result = await Swal.fire({
+            title: 'Class Exists',
+            text: `A class "${timetable[subjectKey].code}" already exists at this time. Overwrite it?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Overwrite',
+            cancelButtonText: 'Cancel',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)'
+        });
+
+        if (!result.isConfirmed) {
             return;
         }
     }
@@ -548,5 +602,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('manualAddForm').addEventListener('submit', addManualClass);
     document.getElementById('attendanceDate').addEventListener('change', loadDailySchedule);
     document.getElementById('timetableGrid').addEventListener('click', handleTimetableCellClick);
+    
+    document.getElementById('importFile').addEventListener('change', (event) => {
+        selectedTimetableFile = event.target.files[0];
+    });
+
     document.getElementById('importBtn').addEventListener('click', importTimetable);
 });
